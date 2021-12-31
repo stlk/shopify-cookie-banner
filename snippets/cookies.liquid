@@ -1,0 +1,155 @@
+<div class="cookies-wrapper">
+    <div id="cookie-bar" class="cookies bg-white box-shadow w100">
+        <div class="content">
+            <div class="prel fix-height">
+                <div class="cookies-accept dflex prel zi5">
+                    <div class="cookies-accept-content prel">
+                        <p class="cookies-accept-headline"><strong>Náš e-shop pohání cookies</strong></p>
+                        <p class="cookies-accept-text">
+                            Díky těmto neviditelným pomocníčkům můžeme zjistit, co tě u nás zajímá, co naopak ne a
+                            nabídnout ti co nejlepší zážitek během návštěvy e-shopu. Některé cookies jsou nezbytné pro
+                            provoz této stránky. Na cookies, umístěné službami třetích stran, potřebujeme tvůj
+                            souhlas.&nbsp;<a href="https://uprimnytriko.cz/pages/ochrana-osobnich-udaju">Více o ochraně
+                                osobních údajů</a>
+                        </p>
+                    </div>
+                    <div class="cookies-accept-buttons dflex">
+                        <div class="cb-button cb-button-manage">Upravit</div>
+                        <div class="cb-button cb-button-accept" data-accept="all">
+                            Povolit vše</div>
+                    </div>
+                </div>
+
+                <div class="cookies-manage dflex pabs zi1">
+                    <p class="cookies-manage-headline w100"><strong>Nastavení cookies</strong></p>
+                    <div class="cookies-manage-checkboxes dflex">
+                        <div class="cookies-manage-checkbox prel">
+                            <input id="c_essential" type="checkbox" disabled checked>
+                            <label for="c_essential" class="dblock">
+                                <strong>Nezbytné cookies</strong>
+                                <br>
+                                Nezbytné cookies jsou tu od toho, aby byla stránka použitelná tak, že umožní základní
+                                funkce jako navigace stránky a přístup k zabezpečeným sekcím webové stránky. Bez nich by
+                                tento web nefungoval správně.</label>
+                        </div>
+                        <div class="cookies-manage-checkbox prel">
+                            <input id="c_analytical" type="checkbox">
+                            <label for="c_analytical" class="dblock">
+                                <strong>Analytické a marketingové cookies</strong>
+                                <br>
+                                Analytické cookies nám pomáhají pochopit, jací návštěvníci k nám chodí a co u nás
+                                hledají. Marketingové cookies používáme pro sledování návštěvníků a nabízení zajímavých
+                                a relevantních nabídek pro jednotlivce.</label>
+                        </div>
+                    </div>
+                    <div class="cookies-manage-buttons">
+                        <div class="cb-button cb-button-accept" data-accept="selected">Uložit</div>
+                        <div class="cb-button cb-button-back">Zpět</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    class CookieBar {
+        constructor() {
+            this.cookiesBar = document.getElementById('cookie-bar');
+        }
+
+        init() {
+            const shouldShowGDPRBanner = window.Shopify.customerPrivacy.shouldShowGDPRBanner()
+            console.log({ shouldShowGDPRBanner });
+
+            if (shouldShowGDPRBanner) {
+                document.addEventListener('trackingConsentAccepted', () => {
+                    this.startTracking()
+                });
+
+                this.showBanner();
+            }
+
+            if (window.Shopify.customerPrivacy.userCanBeTracked()) {
+                this.startTracking();
+            }
+
+            for (const button of document.querySelectorAll('.open-cookie-banner')) {
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    this.showBanner();
+                });
+            }
+        }
+
+        showBanner() {
+            if (!this.cookiesBar) {
+                return;
+            }
+            this.acceptCookies = this.cookiesBar.querySelector('.cookies-accept');
+            this.manageCookies = this.cookiesBar.querySelector('.cookies-manage');
+
+            this.cookiesBar.classList.add('show')
+            this.showMain()
+
+            for (const button of this.cookiesBar.querySelectorAll('.cb-button-accept')) {
+                button.addEventListener('click', (event) => this.allowCookies(event));
+            }
+
+            this.cookiesBar.querySelector('.cb-button-manage').addEventListener('click', () => this.showManage());
+            this.cookiesBar.querySelector('.cb-button-back').addEventListener('click', () => this.showMain());
+        }
+
+        showManage() {
+            this.acceptCookies.style.opacity = 0;
+            this.manageCookies.classList.add("displayed");
+            this.cookiesBar.querySelector(".fix-height").style.height = `${this.manageCookies.clientHeight}px`;
+
+            setTimeout(() => {
+                this.acceptCookies.style.display = 'none';
+            }, 405);
+        }
+
+        showMain() {
+            this.manageCookies.classList.remove("displayed");
+            this.acceptCookies.style.display = 'flex';
+            this.cookiesBar.querySelector(".fix-height").style.height = `${this.acceptCookies.clientHeight}px`;
+
+            setTimeout(() => {
+                this.acceptCookies.style.opacity = 1;
+            }, 405);
+        }
+
+        startTracking() {
+            // Shopify manages Facebook and Google themselves
+            // Manage your outher cookie users here
+        }
+
+        allowCookies(event) {
+            const accept = event.target.dataset.accept;
+            let trackingAllowed = true;
+            if (accept === 'selected') {
+                trackingAllowed = this.cookiesBar.querySelector('#c_analytical').checked;
+            }
+            console.log({ accept });
+            console.log({ trackingAllowed });
+            window.Shopify.customerPrivacy.setTrackingConsent(trackingAllowed, () => { });
+            this.cookiesBar.classList.add('hidden');
+        }
+    }
+
+    window.Shopify.loadFeatures(
+        [
+            {
+                name: 'consent-tracking-api',
+                version: '0.1',
+            },
+        ],
+        error => {
+            if (error) {
+                throw error; // if you want to raise
+            }
+            const cookieBar = new CookieBar();
+            cookieBar.init();
+        },
+    );
+</script>
